@@ -163,16 +163,21 @@ footer.foot{text-align:center;color:var(--muted);font-size:.78rem;padding-block:
 .linkbtn{border:0;background:none;padding:0;color:var(--accent);text-decoration:underline}
 .pubbar.err{background:var(--live)}
 footer.foot a{color:var(--muted)}
+.efields{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.efields label{display:grid;gap:3px;font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;min-width:0}
+.efields .full{grid-column:1/-1}
+.efields input,.efields select,.trow input,.trow select{font:inherit;font-size:.95rem;text-transform:none;letter-spacing:0;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 9px;width:100%;min-width:0}
+.trow{display:grid;grid-template-columns:1fr 120px auto;gap:8px;align-items:center;padding:8px 12px;border-top:1px solid var(--line)}
+.trow:first-child{border-top:0}
+.tconf{grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.85rem;color:var(--muted)}
+.tools{display:flex;gap:8px;flex-wrap:wrap;padding:12px}
+section>.tools{padding:10px 0 0}
+.btn.icon{width:40px;height:40px;padding:0;font-size:1.3rem;line-height:1}
+.aline .nm.ph{color:var(--muted);font-style:italic;font-weight:500}
+.acard .hd span{display:flex;gap:10px;align-items:center}
+.panel.wide b{font-size:1rem}
 </style>
-<script>
-/* ==========================================================
-   CONFIGURATION SUPABASE – à remplir (Project Settings → API)
-   ========================================================== */
-window.KGG_CONFIG = {
-  url:     "https://zkwyeltwomiwomxiihbg.supabase.co",
-  anonKey: "sb_publishable_is4iYxp8gV7ktgdIZWAjnw_8mO8wA0f"
-};
-</script>
+<script src="config.js"></script>
 </head>
 <body>
 <div id="app"><p style="padding:24px;text-align:center">Kids Got Game · chargement des scores…</p></div>
@@ -182,204 +187,190 @@ window.KGG_CONFIG = {
 <script>
 (function(){
 "use strict";
-/* ===== Tournoi : programme officiel (31/10/2026) ===== */
-var CODES = ["A1","A2","A3","A4","B1","B2","B3","B4"];
-var MATCHES = [
-  {id:"p1", t:"09h55",c:"Latéral 1",k:"poule",g:"A",h:"A1",a:"A2"},
-  {id:"p2", t:"09h55",c:"Latéral 2",k:"poule",g:"B",h:"B1",a:"B2"},
-  {id:"p3", t:"09h55",c:"Latéral 3",k:"poule",g:"A",h:"A3",a:"A4"},
-  {id:"q1", t:"10h15",c:"",k:"duel",l:"Quart 1"},
-  {id:"p4", t:"10h35",c:"Latéral 1",k:"poule",g:"B",h:"B3",a:"B4"},
-  {id:"p5", t:"10h35",c:"Latéral 2",k:"poule",g:"A",h:"A1",a:"A3"},
-  {id:"p6", t:"10h35",c:"Latéral 3",k:"poule",g:"B",h:"B1",a:"B3"},
-  {id:"q2", t:"10h55",c:"",k:"duel",l:"Quart 2"},
-  {id:"p7", t:"11h15",c:"Latéral 1",k:"poule",g:"A",h:"A2",a:"A4"},
-  {id:"p8", t:"11h15",c:"Latéral 2",k:"poule",g:"B",h:"B2",a:"B4"},
-  {id:"p9", t:"11h15",c:"Latéral 3",k:"poule",g:"A",h:"A1",a:"A4"},
-  {id:"q3", t:"11h35",c:"",k:"duel",l:"Quart 3"},
-  {id:"p10",t:"11h55",c:"Latéral 1",k:"poule",g:"A",h:"A2",a:"A3"},
-  {id:"p11",t:"11h55",c:"Latéral 2",k:"poule",g:"B",h:"B1",a:"B4"},
-  {id:"p12",t:"11h55",c:"Latéral 3",k:"poule",g:"B",h:"B2",a:"B3"},
-  {id:"q4", t:"12h15",c:"",k:"duel",l:"Quart 4"},
-  {id:"d1", t:"12h35",c:"",k:"duel",l:"Demi 1"},
-  {id:"d2", t:"12h50",c:"",k:"duel",l:"Demi 2"},
-  {id:"c1", t:"14h05",c:"",k:"final",l:"Places 5-6",f:"4vs4"},
-  {id:"c2", t:"14h25",c:"",k:"final",l:"Places 7-8",f:"4vs4"},
-  {id:"s1", t:"15h05",c:"Terrain principal",k:"final",l:"Demi-finale 1",f:"5vs5"},
-  {id:"s2", t:"15h25",c:"Terrain principal",k:"final",l:"Demi-finale 2",f:"5vs5"},
-  {id:"f1", t:"16h05",c:"",k:"duel",l:"Finale 1 contre 1"},
-  {id:"pf", t:"16h15",c:"Terrain principal",k:"final",l:"Petite finale",f:"5vs5"},
-  {id:"ff", t:"16h55",c:"Terrain principal",k:"final",l:"Finale Kids Got Game",f:"5vs5"}
-];
-var BY = {}; MATCHES.forEach(function(m){ BY[m.id]=m; });
+/* =====================================================================
+   KIDS GOT GAME – programme modifiable (équipes et matchs ajoutables)
+   Données Supabase (table kgg) :
+     equipe:<id>  → {nom, poule}
+     match:<id>   → {t:"09:55", c:"Latéral 1", k:"poule"|"duel"|"final", l, h, a, hp, ap, hn, an, hs, as, s, o}
+     link         → lien du QR code
+   ===================================================================== */
+var POULES = ["A","B","C","D","E","F"];
+var KINDS = {poule:"Match de poule", duel:"Concours 1 contre 1", final:"Phase finale"};
 
-/* ===== État partagé (publié dans la page) ===== */
-var state = {teams:{},m:{},players:{},link:"",updated:null};
+/* Programme officiel du 31/10/2026 (chargeable en un clic) */
+var OFFICIAL = {
+  teams:[["A1","A"],["A2","A"],["A3","A"],["A4","A"],["B1","B"],["B2","B"],["B3","B"],["B4","B"]],
+  matches:[
+    ["p1","09:55","Latéral 1","poule","",{h:"A1",a:"A2"}],["p2","09:55","Latéral 2","poule","",{h:"B1",a:"B2"}],["p3","09:55","Latéral 3","poule","",{h:"A3",a:"A4"}],
+    ["q1","10:15","","duel","Quart 1",{}],
+    ["p4","10:35","Latéral 1","poule","",{h:"B3",a:"B4"}],["p5","10:35","Latéral 2","poule","",{h:"A1",a:"A3"}],["p6","10:35","Latéral 3","poule","",{h:"B1",a:"B3"}],
+    ["q2","10:55","","duel","Quart 2",{}],
+    ["p7","11:15","Latéral 1","poule","",{h:"A2",a:"A4"}],["p8","11:15","Latéral 2","poule","",{h:"B2",a:"B4"}],["p9","11:15","Latéral 3","poule","",{h:"A1",a:"A4"}],
+    ["q3","11:35","","duel","Quart 3",{}],
+    ["p10","11:55","Latéral 1","poule","",{h:"A2",a:"A3"}],["p11","11:55","Latéral 2","poule","",{h:"B1",a:"B4"}],["p12","11:55","Latéral 3","poule","",{h:"B2",a:"B3"}],
+    ["q4","12:15","","duel","Quart 4",{}],
+    ["d1","12:35","","duel","Demi 1",{hn:"",an:""}],["d2","12:50","","duel","Demi 2",{}],
+    ["c1","14:05","","final","Places 5-6",{hp:"3e poule A",ap:"3e poule B"}],["c2","14:25","","final","Places 7-8",{hp:"4e poule A",ap:"4e poule B"}],
+    ["s1","15:05","Terrain principal","final","Demi-finale 1",{hp:"1er poule A",ap:"2e poule B"}],["s2","15:25","Terrain principal","final","Demi-finale 2",{hp:"1er poule B",ap:"2e poule A"}],
+    ["f1","16:05","","duel","Finale 1 contre 1",{}],
+    ["pf","16:15","Terrain principal","final","Petite finale",{hp:"Perdant demi 1",ap:"Perdant demi 2"}],
+    ["ff","16:55","Terrain principal","final","Finale Kids Got Game",{hp:"Vainqueur demi 1",ap:"Vainqueur demi 2"}]
+  ]
+};
+
+var state = {teams:{},matches:{},link:"",updated:null,legacy:{}};
 var draft = clone(state);
+var lastErr="", sb=null, session=null, isAdmin=false, adminChecked=false, conn="connecting", pending={}, saveTimer=null, saving=false, saveState="idle";
+var openEdit={}, confirmDel={};
+var LOGO = document.getElementById("kgg-logo").textContent.trim();
 
 function clone(o){ return JSON.parse(JSON.stringify(o)); }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
-function ss(k,v){ try{ if(v===undefined) return sessionStorage.getItem(k); if(v===null) sessionStorage.removeItem(k); else sessionStorage.setItem(k,v);}catch(e){ return null; } }
+function uid(p){ return p+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function hhmm(t){ return t?String(t).replace(":","h"):"—"; }
 
 /* ===== Calculs ===== */
-function mOf(S,id){ var r=S.m[id]||{}; return {h:r.h==null?null:r.h, a:r.a==null?null:r.a, s:r.s||"av"}; }
-function done(S,id){ var r=mOf(S,id); return r.s==="fin" && r.h!=null && r.a!=null; }
-function winSide(S,id){ var r=mOf(S,id); if(!done(S,id)||r.h===r.a) return null; return r.h>r.a?"h":"a"; }
-function teamName(S,code){ return (S.teams[code]||"").trim() || ("Équipe "+code); }
-
-function standings(S,g){
-  var st={}; CODES.filter(function(c){return c[0]===g;}).forEach(function(c){ st[c]={c:c,mj:0,v:0,d:0,pts:0,bp:0,bc:0}; });
-  var games=MATCHES.filter(function(m){return m.k==="poule"&&m.g===g&&done(S,m.id);});
-  games.forEach(function(m){ var r=mOf(S,m.id),H=st[m.h],A=st[m.a];
-    H.mj++;A.mj++;H.bp+=r.h;H.bc+=r.a;A.bp+=r.a;A.bc+=r.h;
-    if(r.h>r.a){H.v++;A.d++;H.pts+=2;A.pts+=1;} else if(r.a>r.h){A.v++;H.d++;A.pts+=2;H.pts+=1;} else {H.pts+=1;A.pts+=1;}
-  });
+function mList(S,kind){ return Object.keys(S.matches).map(function(id){ var m=S.matches[id]; return Object.assign({id:id},m); })
+  .filter(function(m){ return !kind||m.k===kind; })
+  .sort(function(x,y){ var a=x.t||"99:99",b=y.t||"99:99"; return a<b?-1:a>b?1:((x.o||0)-(y.o||0)); }); }
+function done(m){ return m.s==="fin" && m.hs!=null && m.as!=null; }
+function winSide(m){ if(!done(m)||m.hs===m.as) return null; return m.hs>m.as?"h":"a"; }
+function teamName(S,id){ var t=S.teams[id]; return t?((t.nom||"").trim()||"Équipe sans nom"):null; }
+function teamList(S){ return Object.keys(S.teams).map(function(id){ return Object.assign({id:id},S.teams[id]); })
+  .sort(function(x,y){ return (x.poule||"").localeCompare(y.poule||"")||((x.o||0)-(y.o||0))||(x.id<y.id?-1:1); }); }
+function poulesOf(S){ var p={}; teamList(S).forEach(function(t){ if(t.poule) p[t.poule]=1; }); return Object.keys(p).sort(); }
+function pouleOfMatch(S,m){ var a=S.teams[m.h],b=S.teams[m.a]; return a&&b&&a.poule===b.poule?a.poule:null; }
+function sides(S,m){
+  if(m.k==="duel") return {h:m.hn?{name:m.hn}:{name:"Joueur à désigner",ph:true}, a:m.an?{name:m.an}:{name:"Joueur à désigner",ph:true}};
+  function one(id,ph){ var n=id&&teamName(S,id); return n?{name:n}:{name:ph||"À définir",ph:true}; }
+  return {h:one(m.h,m.hp), a:one(m.a,m.ap)};
+}
+function standings(S,p){
+  var st={}; teamList(S).filter(function(t){return t.poule===p;}).forEach(function(t){ st[t.id]={id:t.id,mj:0,v:0,d:0,pts:0,bp:0,bc:0}; });
+  var games=mList(S,"poule").filter(function(m){ return done(m)&&st[m.h]&&st[m.a]; });
+  games.forEach(function(m){ var H=st[m.h],A=st[m.a];
+    H.mj++;A.mj++;H.bp+=m.hs;H.bc+=m.as;A.bp+=m.as;A.bc+=m.hs;
+    if(m.hs>m.as){H.v++;A.d++;H.pts+=2;A.pts+=1;} else if(m.as>m.hs){A.v++;H.d++;A.pts+=2;H.pts+=1;} else {H.pts+=1;A.pts+=1;} });
   var list=Object.keys(st).map(function(k){var x=st[k];x.diff=x.bp-x.bc;return x;});
   // Règlement : points, puis 1) confrontations directes 2) différence 3) points marqués
   list.sort(function(x,y){return y.pts-x.pts;});
   var out=[],i=0;
   while(i<list.length){ var j=i; while(j<list.length&&list[j].pts===list[i].pts) j++;
     var grp=list.slice(i,j);
-    if(grp.length>1){ var ids=grp.map(function(x){return x.c;}), h2h={};
+    if(grp.length>1){ var ids=grp.map(function(x){return x.id;}), h2h={};
       ids.forEach(function(c){h2h[c]={p:0,df:0};});
-      games.forEach(function(m){ if(ids.indexOf(m.h)<0||ids.indexOf(m.a)<0) return; var r=mOf(S,m.id);
-        h2h[m.h].df+=r.h-r.a; h2h[m.a].df+=r.a-r.h;
-        if(r.h>r.a){h2h[m.h].p+=2;h2h[m.a].p+=1;} else if(r.a>r.h){h2h[m.a].p+=2;h2h[m.h].p+=1;} else {h2h[m.h].p++;h2h[m.a].p++;} });
-      grp.sort(function(x,y){ return (h2h[y.c].p-h2h[x.c].p)||(h2h[y.c].df-h2h[x.c].df)||(y.diff-x.diff)||(y.bp-x.bp)||(x.c<y.c?-1:1); });
+      games.forEach(function(m){ if(ids.indexOf(m.h)<0||ids.indexOf(m.a)<0) return;
+        h2h[m.h].df+=m.hs-m.as; h2h[m.a].df+=m.as-m.hs;
+        if(m.hs>m.as){h2h[m.h].p+=2;h2h[m.a].p+=1;} else if(m.as>m.hs){h2h[m.a].p+=2;h2h[m.h].p+=1;} else {h2h[m.h].p++;h2h[m.a].p++;} });
+      grp.sort(function(x,y){ return (h2h[y.id].p-h2h[x.id].p)||(h2h[y.id].df-h2h[x.id].df)||(y.diff-x.diff)||(y.bp-x.bp)||(x.id<y.id?-1:1); });
     }
     out=out.concat(grp); i=j; }
   return out;
 }
-function pouleDone(S,g){ return MATCHES.filter(function(m){return m.k==="poule"&&m.g===g;}).every(function(m){return done(S,m.id);}); }
-function seed(S,g,rank){ if(!pouleDone(S,g)) return null; return standings(S,g)[rank-1].c; }
-
-/* résout les deux camps d'un match : {name, ph(placeholder)} */
-function sides(S,id){
-  var m=BY[id];
-  function T(code,ph){ return code?{name:teamName(S,code),code:code,ph:false}:{name:ph,ph:true}; }
-  function W(mid,ph,lose){ var w=winSide(S,mid); if(!w) return {name:ph,ph:true}; var sd=sides(S,mid)[lose?(w==="h"?"a":"h"):w]; return sd.ph?{name:ph,ph:true}:sd; }
-  function P(side,ph){ var n=((S.players[id]||{})[side]||"").trim(); return n?{name:n,ph:false}:{name:ph,ph:true}; }
-  if(m.k==="poule") return {h:T(m.h),a:T(m.a)};
-  switch(id){
-    case "c1": return {h:T(seed(S,"A",3),"3e poule A"),a:T(seed(S,"B",3),"3e poule B")};
-    case "c2": return {h:T(seed(S,"A",4),"4e poule A"),a:T(seed(S,"B",4),"4e poule B")};
-    case "s1": return {h:T(seed(S,"A",1),"1er poule A"),a:T(seed(S,"B",2),"2e poule B")};
-    case "s2": return {h:T(seed(S,"B",1),"1er poule B"),a:T(seed(S,"A",2),"2e poule A")};
-    case "pf": return {h:W("s1","Perdant demi 1",true),a:W("s2","Perdant demi 2",true)};
-    case "ff": return {h:W("s1","Vainqueur demi 1"),a:W("s2","Vainqueur demi 2")};
-    case "q1": case "q2": case "q3": case "q4": return {h:P("h","Joueur à désigner"),a:P("a","Joueur à désigner")};
-    case "d1": return {h:W("q1","Vainqueur quart 1"),a:W("q2","Vainqueur quart 2")};
-    case "d2": return {h:W("q3","Vainqueur quart 3"),a:W("q4","Vainqueur quart 4")};
-    case "f1": return {h:W("d1","Vainqueur demi 1"),a:W("d2","Vainqueur demi 2")};
-  }
-}
-function finalRanking(S){
-  var r=[],pairs=[["ff",1],["pf",3],["c1",5],["c2",7]],ok=true;
-  pairs.forEach(function(p){ var w=winSide(S,p[0]); if(!w){ok=false;return;} var sd=sides(S,p[0]);
-    var lo=w==="h"?"a":"h"; r[p[1]-1]=sd[w].name; r[p[1]]=sd[lo].name; });
-  return {list:r,complete:ok};
-}
-function label(m){ return m.k==="poule"?("Poule "+m.g):m.l; }
+function rankLabel(S){ var r={}; poulesOf(S).forEach(function(p){ standings(S,p).forEach(function(x,i){ r[x.id]=(i===0?"1er":(i+1)+"e")+" poule "+p; }); }); return r; }
+function label(S,m){ if(m.k==="poule"){ var p=pouleOfMatch(S,m); return p?"Poule "+p:"Match de poule"; } return m.l||KINDS[m.k]; }
 
 /* ===== Rendu public ===== */
-function rowHTML(S,id,opt){
-  var m=BY[id],r=mOf(S,id),sd=sides(S,id),w=winSide(S,id),show=r.s!=="av"&&r.h!=null&&r.a!=null;
-  function side(k){ var cls=w?(w===k?"w":"l"):""; return '<div class="side '+cls+'"><span class="nm'+(sd[k].ph?' ph':'')+'">'+esc(sd[k].name)+'</span><span class="sc">'+(show?r[k]:"")+'</span></div>'; }
-  var pill=r.s==="live"?'<span class="pill live">Direct</span>':r.s==="fin"?'<span class="pill fin">Fin</span>':'<span class="pill">'+esc(m.t)+'</span>';
-  var sub=(opt&&opt.sub)||m.c||label(m);
-  return '<div class="row"><div class="when">'+esc(m.t)+'<small>'+esc(sub)+'</small></div><div class="pair">'+side("h")+side("a")+'</div>'+pill+'</div>';
+function rowHTML(S,m,opt){
+  var sd=sides(S,m),w=winSide(m),show=(m.s==="live"||m.s==="fin")&&m.hs!=null&&m.as!=null;
+  function side(k){ var cls=w?(w===k?"w":"l"):""; return '<div class="side '+cls+'"><span class="nm'+(sd[k].ph?' ph':'')+'">'+esc(sd[k].name)+'</span><span class="sc">'+(show?(k==="h"?m.hs:m.as):"")+'</span></div>'; }
+  var pill=m.s==="live"?'<span class="pill live">Direct</span>':m.s==="fin"?'<span class="pill fin">Fin</span>':'<span class="pill">'+esc(hhmm(m.t))+'</span>';
+  var sub=(opt&&opt.sub)?label(S,m):(m.c||label(S,m));
+  return '<div class="row"><div class="when">'+esc(hhmm(m.t))+'<small>'+esc(sub)+'</small></div><div class="pair">'+side("h")+side("a")+'</div>'+pill+'</div>';
 }
-function panel(S,ids,opt){ return '<div class="panel">'+ids.map(function(id){return rowHTML(S,id,opt);}).join("")+'</div>'; }
-
-function boardHTML(S,id){
-  var m=BY[id],r=mOf(S,id),sd=sides(S,id);
-  return '<div class="board"><div class="meta"><span class="live">● En direct</span><span>'+esc([label(m),m.c].filter(Boolean).join(" · "))+'</span></div>'+
-    ["h","a"].map(function(k){return '<div class="line"><span class="nm">'+esc(sd[k].name)+'</span><span class="sc">'+(r[k]==null?0:r[k])+'</span></div>';}).join("")+'</div>';
+function panel(S,list,opt){ if(!list.length) return '<div class="panel empty">Aucun match pour l\'instant.</div>'; return '<div class="panel">'+list.map(function(m){return rowHTML(S,m,opt);}).join("")+'</div>'; }
+function boardHTML(S,m){
+  var sd=sides(S,m);
+  return '<div class="board"><div class="meta"><span class="live">● En direct</span><span>'+esc([label(S,m),m.c].filter(Boolean).join(" · "))+'</span></div>'+
+    ["h","a"].map(function(k){return '<div class="line"><span class="nm">'+esc(sd[k].name)+'</span><span class="sc">'+((k==="h"?m.hs:m.as)==null?0:(k==="h"?m.hs:m.as))+'</span></div>';}).join("")+'</div>';
 }
-
 function vDirect(S){
-  var live=MATCHES.filter(function(m){return mOf(S,m.id).s==="live";}).map(function(m){return m.id;});
-  var next=MATCHES.filter(function(m){return mOf(S,m.id).s==="av";}).slice(0,5).map(function(m){return m.id;});
-  var last=MATCHES.filter(function(m){return mOf(S,m.id).s==="fin";}).slice(-5).reverse().map(function(m){return m.id;});
+  var all=mList(S), live=all.filter(function(m){return m.s==="live";}), next=all.filter(function(m){return !m.s||m.s==="av";}).slice(0,5), last=all.filter(function(m){return m.s==="fin";}).slice(-5).reverse();
   var h="";
-  if(live.length) h+='<section><h2 class="sec">En ce moment</h2><div class="boards">'+live.map(function(id){return boardHTML(S,id);}).join("")+'</div></section>';
-  else if(!last.length) h+='<section class="hero"><p>Coup d\'envoi du tournoi</p><div class="big">09h55</div><p>Samedi 31 octobre · 3 terrains latéraux</p></section>';
+  if(live.length) h+='<section><h2 class="sec">En ce moment</h2><div class="boards">'+live.map(function(m){return boardHTML(S,m);}).join("")+'</div></section>';
+  else if(!last.length){ var first=all.filter(function(m){return m.t;})[0]; h+='<section class="hero"><p>Coup d\'envoi du tournoi</p><div class="big">'+esc(first?hhmm(first.t):"Samedi")+'</div><p>Samedi 31 octobre · AEB Bagnolet</p></section>'; }
   if(next.length) h+='<section><h2 class="sec">À suivre</h2>'+panel(S,next,{})+'</section>';
   if(last.length) h+='<section><h2 class="sec">Derniers résultats</h2>'+panel(S,last,{})+'</section>';
-  var fr=finalRanking(S); if(fr.complete) h='<section><h2 class="sec">Classement final</h2>'+rankHTML(fr.list)+'</section>'+h;
   return h;
 }
-function standHTML(S,g){
-  var st=standings(S,g);
+function standHTML(S,p){
+  var st=standings(S,p);
   return '<div class="panel"><div class="tscroll"><table class="st"><thead><tr><th>#</th><th class="tm">Équipe</th><th>MJ</th><th>V</th><th>D</th><th>Pts</th><th>Diff</th><th>Marqués</th></tr></thead><tbody>'+
-    st.map(function(x,i){return '<tr class="'+(i<2?"q":"")+'"><td class="rk">'+(i+1)+'</td><td class="tm">'+esc(teamName(S,x.c))+'</td><td>'+x.mj+'</td><td>'+x.v+'</td><td>'+x.d+'</td><td class="pts">'+x.pts+'</td><td>'+(x.diff>0?"+":"")+x.diff+'</td><td>'+x.bp+'</td></tr>';}).join("")+
-    '</tbody></table></div><div class="legend"><span><i></i>Demi-finales 5vs5</span><span><i class="o"></i>Matchs de classement 4vs4</span></div></div>';
+    st.map(function(x,i){return '<tr class="'+(i<2?"q":"")+'"><td class="rk">'+(i+1)+'</td><td class="tm">'+esc(teamName(S,x.id))+'</td><td>'+x.mj+'</td><td>'+x.v+'</td><td>'+x.d+'</td><td class="pts">'+x.pts+'</td><td>'+(x.diff>0?"+":"")+x.diff+'</td><td>'+x.bp+'</td></tr>';}).join("")+
+    '</tbody></table></div></div>';
 }
 function vPoules(S){
-  return '<div class="grid2">'+["A","B"].map(function(g){
-    var ids=MATCHES.filter(function(m){return m.k==="poule"&&m.g===g;}).map(function(m){return m.id;});
-    return '<section><h2 class="sec">Poule '+g+(pouleDone(S,g)?' <small>terminée</small>':'')+'</h2>'+standHTML(S,g)+'<h2 class="sec" style="margin-top:16px">Matchs <small>4vs4</small></h2>'+panel(S,ids,{})+'</section>';
+  var ps=poulesOf(S); if(!ps.length) return '<div class="panel empty">Les poules seront affichées dès que les équipes seront inscrites.</div>';
+  var pm=mList(S,"poule");
+  return '<div class="grid2">'+ps.map(function(p){
+    return '<section><h2 class="sec">Poule '+esc(p)+'</h2>'+standHTML(S,p)+'<h2 class="sec" style="margin-top:16px">Matchs</h2>'+panel(S,pm.filter(function(m){return pouleOfMatch(S,m)===p;}),{})+'</section>';
   }).join("")+'</div><p class="note">Victoire 2 pts · Défaite 1 pt · Forfait 0. Égalité : confrontations directes, puis différence de points, puis points marqués.</p>';
 }
-function rankHTML(list){ return '<div class="panel"><ol class="rank">'+list.map(function(n,i){return '<li><span class="p">'+(i+1)+'</span><span>'+esc(n)+'</span></li>';}).join("")+'</ol></div>'; }
-function vFinales(S){
-  var fr=finalRanking(S),h="";
-  if(fr.complete) h+='<section><h2 class="sec">Classement final</h2>'+rankHTML(fr.list)+'</section>';
-  h+='<section><h2 class="sec">Finale <small>5vs5 · 2 × 10 min</small></h2>'+panel(S,["ff"],{sub:"Principal"})+'</section>';
-  h+='<section><h2 class="sec">Demi-finales <small>5vs5 · 2 × 5 min</small></h2>'+panel(S,["s1","s2"],{sub:"Principal"})+'</section>';
-  h+='<section><h2 class="sec">Petite finale <small>3e place</small></h2>'+panel(S,["pf"],{sub:"Principal"})+'</section>';
-  h+='<section><h2 class="sec">Classement 5 à 8 <small>4vs4 · 2 × 5 min</small></h2>'+panel(S,["c1","c2"],{})+'</section>';
-  return h;
-}
-function vDuels(S){
-  return '<section><h2 class="sec">Quarts <small>3 min · mort subite si égalité</small></h2>'+panel(S,["q1","q2","q3","q4"],{})+'</section>'+
-    '<section><h2 class="sec">Demi-finales</h2>'+panel(S,["d1","d2"],{})+'</section>'+
-    '<section><h2 class="sec">Finale 1 contre 1</h2>'+panel(S,["f1"],{})+'</section>';
-}
+function vFinales(S){ return '<section><h2 class="sec">Phases finales</h2>'+panel(S,mList(S,"final"),{sub:1})+'</section>'; }
+function vDuels(S){ return '<section><h2 class="sec">Concours 1 contre 1 <small>3 min · mort subite si égalité</small></h2>'+panel(S,mList(S,"duel"),{sub:1})+'</section>'; }
 function vRegles(){
-  var R=[["Paniers","Tous à 2 points, aucun panier à 3 points"],["Faute sur tir réussi","2 points + 1 lancer franc"],["Faute sur tir manqué","2 lancers francs"],["Fautes","4 fautes personnelles = sortie définitive"],["Poules","4vs4 sur les 3 terrains latéraux"],["Classement 5 à 8","4vs4 · 2 × 5 min"],["Demi-finales, petite finale","5vs5 · 2 × 5 min"],["Finale","5vs5 · 2 × 10 min · prolongation 3 min"],["Temps morts","1 par équipe et par mi-temps (30 s)"],["1 contre 1","3 min · 4 fautes = défaite · mort subite"]];
+  var R=[["Paniers","Tous à 2 points, aucun panier à 3 points"],["Faute sur tir réussi","2 points + 1 lancer franc"],["Faute sur tir manqué","2 lancers francs"],["Fautes","4 fautes personnelles = sortie définitive"],["Poules","4vs4 sur les terrains latéraux"],["Classement","4vs4 · 2 × 5 min"],["Demi-finales, petite finale","5vs5 · 2 × 5 min"],["Finale","5vs5 · 2 × 10 min · prolongation 3 min"],["Temps morts","1 par équipe et par mi-temps (30 s)"],["1 contre 1","3 min · 4 fautes = défaite · mort subite"]];
   return '<section><h2 class="sec">Règles du tournoi <small>U13</small></h2><div class="panel"><dl class="rules">'+R.map(function(r){return '<dt>'+r[0]+'</dt><dd>'+r[1]+'</dd>';}).join("")+'</dl></div></section>';
 }
 
-/* ===== Table de marque (enregistrement automatique) ===== */
-var lastErr="", sb=null, session=null, isAdmin=false, adminChecked=false, conn="connecting", pending={}, saveTimer=null, saving=false, saveState="idle";
-var LOGO = document.getElementById("kgg-logo").textContent.trim();
-
-function keyVal(S,k){ if(k.indexOf("m:")===0) return S.m[k.slice(2)]; if(k.indexOf("team:")===0) return S.teams[k.slice(5)]; if(k.indexOf("players:")===0) return S.players[k.slice(8)]; if(k==="link") return S.link; }
-function setKey(S,k,v){ if(k.indexOf("m:")===0){ if(v==null) delete S.m[k.slice(2)]; else S.m[k.slice(2)]=v; } else if(k.indexOf("team:")===0) S.teams[k.slice(5)]=v==null?"":v; else if(k.indexOf("players:")===0){ if(v==null) delete S.players[k.slice(8)]; else S.players[k.slice(8)]=v; } else if(k==="link") S.link=v==null?"":v; }
-function cardDirty(id){ return !!pending["m:"+id]; }
-
+/* ===== Table de marque ===== */
+function teamOptions(S,sel){
+  var rk=rankLabel(S);
+  return '<option value="">À définir</option>'+teamList(S).map(function(t){ return '<option value="'+esc(t.id)+'"'+(t.id===sel?" selected":"")+'>'+esc((t.nom||"Équipe sans nom")+(rk[t.id]?" · "+rk[t.id]:""))+'</option>'; }).join("");
+}
 function acardHTML(id){
-  var m=BY[id],r=mOf(draft,id),sd=sides(draft,id);
-  function line(k){ return '<div class="aline"><span class="nm">'+esc(sd[k].name)+'</span><div class="ctrl">'+
+  var m=Object.assign({id:id},draft.matches[id]||{}),sd=sides(draft,m),st=m.s||"av",ed=!!openEdit[id];
+  function line(k){ var v=k==="h"?m.hs:m.as; return '<div class="aline"><span class="nm'+(sd[k].ph?' ph':'')+'">'+esc(sd[k].name)+'</span><div class="ctrl">'+
     '<button data-act="add" data-id="'+id+'" data-k="'+k+'" data-v="-1" aria-label="Retirer 1 point">−1</button>'+
-    '<input id="sc-'+id+'-'+k+'" data-id="'+id+'" data-k="'+k+'" inputmode="numeric" pattern="[0-9]*" value="'+(r[k]==null?"":r[k])+'" aria-label="Score '+esc(sd[k].name)+'">'+
+    '<input data-score="'+id+'" data-k="'+k+'" inputmode="numeric" pattern="[0-9]*" value="'+(v==null?"":v)+'" aria-label="Score '+esc(sd[k].name)+'">'+
     '<button data-act="add" data-id="'+id+'" data-k="'+k+'" data-v="1" aria-label="Ajouter 1 point">+1</button>'+
     '<button class="plus" data-act="add" data-id="'+id+'" data-k="'+k+'" data-v="2" aria-label="Ajouter 2 points">+2</button></div></div>'; }
-  function sb_(v,t,c){ return '<button class="'+(c||"")+'" data-act="st" data-id="'+id+'" data-v="'+v+'" aria-pressed="'+(r.s===v)+'">'+t+'</button>'; }
-  return '<div class="acard'+(cardDirty(id)?" dirty":"")+'" id="ac-'+id+'"><div class="hd"><b>'+esc(m.t)+' · '+esc(label(m))+'</b><span>'+esc(m.c||(m.f||""))+'</span></div>'+line("h")+line("a")+
-    '<div class="seg">'+sb_("av","À venir")+sb_("live","En direct","live")+sb_("fin","Terminé")+'</div></div>';
+  function sbt(v,t,c){ return '<button class="'+(c||"")+'" data-act="st" data-id="'+id+'" data-v="'+v+'" aria-pressed="'+(st===v)+'">'+t+'</button>'; }
+  var h='<div class="acard'+(pending["match:"+id]?" dirty":"")+'" id="ac-'+id+'"><div class="hd"><b>'+esc(hhmm(m.t))+' · '+esc(label(draft,m))+'</b><span>'+esc(m.c||"")+' <button class="linkbtn" data-act="edit" data-id="'+id+'">'+(ed?"Fermer":"Modifier")+'</button></span></div>';
+  if(ed){
+    h+='<div class="efields"><label>Heure<input type="time" data-mf="t" data-id="'+id+'" value="'+esc(m.t||"")+'"></label><label>Terrain<input data-mf="c" data-id="'+id+'" value="'+esc(m.c||"")+'" placeholder="Latéral 1"></label>';
+    if(m.k!=="poule") h+='<label class="full">Nom du match<input data-mf="l" data-id="'+id+'" value="'+esc(m.l||"")+'" placeholder="Demi-finale 1"></label>';
+    if(m.k==="duel") h+='<label>Joueur 1<input data-mf="hn" data-id="'+id+'" value="'+esc(m.hn||"")+'"></label><label>Joueur 2<input data-mf="an" data-id="'+id+'" value="'+esc(m.an||"")+'"></label>';
+    else h+='<label>Équipe 1<select data-mf="h" data-id="'+id+'">'+teamOptions(draft,m.h)+'</select></label><label>Équipe 2<select data-mf="a" data-id="'+id+'">'+teamOptions(draft,m.a)+'</select></label>';
+    if(m.k==="final") h+='<label>Texte si équipe 1 à définir<input data-mf="hp" data-id="'+id+'" value="'+esc(m.hp||"")+'" placeholder="1er poule A"></label><label>Texte si équipe 2 à définir<input data-mf="ap" data-id="'+id+'" value="'+esc(m.ap||"")+'" placeholder="2e poule B"></label>';
+    h+='</div>'+(confirmDel[id]?'<div class="confirm"><b style="flex:1">Supprimer ce match ?</b><button class="btn" data-act="delno" data-id="'+id+'">Garder</button><button class="btn dng" data-act="delyes" data-id="'+id+'">Supprimer</button></div>':'<button class="btn dng" data-act="del" data-id="'+id+'">Supprimer ce match</button>');
+  }
+  return h+line("h")+line("a")+'<div class="seg">'+sbt("av","À venir")+sbt("live","En direct","live")+sbt("fin","Terminé")+'</div></div>';
+}
+function teamsHTML(){
+  var ts=teamList(draft);
+  return '<section id="teamsec"><h2 class="sec">Équipes <small>'+ts.length+' inscrite'+(ts.length>1?"s":"")+' · modifiables à tout moment</small></h2><div class="panel">'+
+    (ts.length?ts.map(function(t){ var used=Object.keys(draft.matches).filter(function(k){var m=draft.matches[k];return m.h===t.id||m.a===t.id;}).length;
+      return '<div class="trow"><input data-tf="nom" data-id="'+esc(t.id)+'" value="'+esc(t.nom||"")+'" placeholder="Nom de l\'équipe" aria-label="Nom de l\'équipe">'+
+      '<select data-tf="poule" data-id="'+esc(t.id)+'" aria-label="Poule">'+POULES.map(function(p){return '<option value="'+p+'"'+(t.poule===p?" selected":"")+'>Poule '+p+'</option>';}).join("")+'</select>'+
+      (confirmDel["t"+t.id]?'<span class="tconf">'+(used?used+' match'+(used>1?"s":"")+' afficheront « À définir ». ':'')+'<button class="btn dng" data-act="tdelyes" data-id="'+esc(t.id)+'">Retirer</button><button class="btn" data-act="tdelno" data-id="'+esc(t.id)+'">Garder</button></span>':
+      '<button class="btn icon" data-act="tdel" data-id="'+esc(t.id)+'" aria-label="Retirer cette équipe">×</button>')+'</div>'; }).join(""):'<div class="empty">Aucune équipe.</div>')+
+    '<div class="tools"><button class="btn pri" data-act="tadd">+ Ajouter une équipe</button><button class="btn" data-act="gen">Créer les matchs de poule manquants</button></div></div>'+
+    '<p class="note">« Créer les matchs de poule manquants » ajoute un match pour chaque paire d\'équipes d\'une même poule qui ne se sont pas encore rencontrées. Il reste ensuite à leur donner une heure et un terrain (bouton Modifier).</p></section>';
 }
 function loginHTML(msg){
   return '<section><h2 class="sec">Table de marque</h2><form class="panel login" id="loginform">'+
     '<p class="note" style="margin:0">Connexion réservée aux organisateurs. Le public n\'a pas besoin de compte.</p>'+
     '<label for="lg-mail">E-mail<input id="lg-mail" type="email" autocomplete="username" required></label>'+
     '<label for="lg-pass">Mot de passe<input id="lg-pass" type="password" autocomplete="current-password" required></label>'+
-    (msg?'<div class="banner">'+esc(msg)+'</div>':'')+
-    '<button class="btn pri" type="submit" id="lg-btn">Se connecter</button></form></section>';
+    (msg?'<div class="banner">'+esc(msg)+'</div>':'')+'<button class="btn pri" type="submit" id="lg-btn">Se connecter</button></form></section>';
 }
 function vTable(){
-  if(!sb) return '<div class="banner">Supabase n\'est pas encore configuré : remplissez SUPABASE_URL et SUPABASE_ANON_KEY en haut du fichier index.html.</div>';
+  if(!sb) return '<div class="banner">Supabase n\'est pas configuré : vérifiez le fichier config.js.</div>';
   if(!session) return loginHTML(vTable.msg);
   if(!adminChecked) return '<div class="empty">Vérification du compte…</div>';
   if(!isAdmin) return '<div class="banner">Le compte '+esc(session.user.email)+' n\'est pas autorisé à saisir les scores. Ajoutez cet e-mail dans la table kgg_admins de Supabase.</div><button class="btn" data-act="logout">Se déconnecter</button>';
   var h='<div class="banner">Chaque changement est <b>enregistré automatiquement</b> et apparaît en 1 à 2 secondes sur tous les téléphones. Passez un match en <b>Terminé</b> pour qu\'il compte au classement.</div>';
-  var groups=[["Matchs de poule · 4vs4",MATCHES.filter(function(m){return m.k==="poule";})],["Concours 1 contre 1",MATCHES.filter(function(m){return m.k==="duel";})],["Phases finales",MATCHES.filter(function(m){return m.k==="final";})]];
-  groups.forEach(function(g){ h+='<section><h2 class="sec">'+g[0]+'</h2><div class="boards">'+g[1].map(function(m){return acardHTML(m.id);}).join("")+'</div></section>'; });
-  h+='<section><h2 class="sec">Noms des équipes</h2><div class="panel fields">'+CODES.map(function(c){return '<label for="tm-'+c+'">Équipe '+c+'<input id="tm-'+c+'" data-team="'+c+'" value="'+esc(draft.teams[c]||"")+'" placeholder="Équipe '+c+'"></label>';}).join("")+'</div></section>';
-  h+='<section><h2 class="sec">Joueurs 1 contre 1 <small>un par équipe</small></h2><div class="panel fields">'+["q1","q2","q3","q4"].map(function(q,i){var p=draft.players[q]||{};return '<label for="pl-'+q+'-h">Quart '+(i+1)+' · joueur 1<input id="pl-'+q+'-h" data-pl="'+q+'" data-k="h" value="'+esc(p.h||"")+'"></label><label for="pl-'+q+'-a">Quart '+(i+1)+' · joueur 2<input id="pl-'+q+'-a" data-pl="'+q+'" data-k="a" value="'+esc(p.a||"")+'"></label>';}).join("")+'</div></section>';
+  if(!Object.keys(draft.matches).length&&!Object.keys(draft.teams).length)
+    h+='<section class="panel wide"><b>Le programme est vide.</b><span class="note" style="margin:0">Chargez le programme officiel (8 équipes, 2 poules, horaires du 31 octobre), puis ajoutez ou retirez ce que vous voulez.</span><button class="btn pri" data-act="official">Charger le programme officiel</button></section>';
+  h+=teamsHTML();
+  ["poule","duel","final"].forEach(function(k){
+    var list=mList(draft,k);
+    h+='<section><h2 class="sec">'+KINDS[k]+(k==="poule"?"s":k==="final"?"s":"")+'</h2><div class="boards">'+list.map(function(m){return acardHTML(m.id);}).join("")+'</div>'+
+      '<div class="tools"><button class="btn" data-act="madd" data-k="'+k+'">+ Ajouter un match</button></div></section>';
+  });
   h+='<section><h2 class="sec">Lien du QR code</h2><div class="panel wide"><label for="lnk" class="tag">Laissez vide pour utiliser l\'adresse de cette page</label><input id="lnk" data-link="1" value="'+esc(draft.link||"")+'" placeholder="'+esc(pageURL())+'"></div></section>';
-  h+='<section><h2 class="sec">Remise à zéro</h2><div class="panel" id="resetbox"><div class="confirm"><span class="note" style="margin:0;flex:1">Efface tous les scores (les noms sont conservés).</span><button class="btn dng" data-act="reset1">Effacer les scores</button></div></div></section>';
+  h+='<section><h2 class="sec">Remise à zéro</h2><div class="panel" id="resetbox"><div class="confirm"><span class="note" style="margin:0;flex:1">Efface tous les scores. Les équipes et les matchs sont conservés.</span><button class="btn dng" data-act="reset1">Effacer les scores</button></div></div></section>';
   h+='<p class="note">Connectée : '+esc(session.user.email)+' · <button class="linkbtn" data-act="logout">Se déconnecter</button></p>';
   return h;
 }
@@ -388,26 +379,21 @@ function vTable(){
 function pageURL(){ return location.origin+location.pathname; }
 function qrLink(){ return (state.link||"").trim()||pageURL(); }
 function vAffiche(){
-  return '<section class="poster"><h2 class="sec">Affiche QR code</h2>'+
-    '<canvas id="poster" width="1240" height="1754" aria-label="Affiche avec QR code"></canvas><div class="linkbox">'+esc(qrLink())+'</div>'+
+  return '<section class="poster"><h2 class="sec">Affiche QR code</h2><canvas id="poster" width="1240" height="1754" aria-label="Affiche avec QR code"></canvas><div class="linkbox">'+esc(qrLink())+'</div>'+
     '<button class="btn pri" data-act="dl">Télécharger l\'affiche (PNG)</button><p class="note">À imprimer en A4 et à coller à l\'entrée du gymnase et près de chaque terrain.</p></section>';
 }
 function drawPoster(){
-  var cv=document.getElementById("poster"); if(!cv) return; var x=cv.getContext("2d"),W=cv.width,H=cv.height;
-  x.fillStyle="#0B2C5B";x.fillRect(0,0,W,H);
-  x.fillStyle="#5BC0EB";x.fillRect(0,0,W,18);x.fillRect(0,H-18,W,18);
+  var cv=document.getElementById("poster"); if(!cv) return; var x=cv.getContext("2d"); if(!x) return; var W=cv.width,H=cv.height;
+  x.fillStyle="#0B2C5B";x.fillRect(0,0,W,H); x.fillStyle="#5BC0EB";x.fillRect(0,0,W,18);x.fillRect(0,H-18,W,18);
   var img=new Image(); img.onload=function(){
-    var lw=300,lh=lw*img.height/img.width; x.drawImage(img,(W-lw)/2,90,lw,lh);
-    var y=90+lh+90; x.textAlign="center"; x.fillStyle="#F3EBD8";
-    x.font="800 128px 'Saira Condensed', Impact, sans-serif"; x.fillText("KIDS GOT GAME",W/2,y);
-    x.fillStyle="#A9C7E4"; x.font="500 44px 'Barlow', Arial, sans-serif"; x.fillText("Tournoi U13 · AEB Bagnolet · Samedi 31 octobre 2026",W/2,y+70);
-    var qs=640,qx=(W-qs)/2,qy=y+130;
-    x.fillStyle="#FFFFFF"; x.fillRect(qx-40,qy-40,qs+80,qs+80);
-    if(window.QRCode){ var d=document.createElement("div");
-      try{ new window.QRCode(d,{text:qrLink(),width:qs,height:qs,colorDark:"#0B2C5B",colorLight:"#FFFFFF",correctLevel:window.QRCode.CorrectLevel.M});
-        var qc=d.querySelector("canvas"); if(qc) x.drawImage(qc,qx,qy,qs,qs); }catch(e){} }
-    x.fillStyle="#F3EBD8"; x.font="800 76px 'Saira Condensed', Impact, sans-serif"; x.fillText("SCANNEZ POUR LES SCORES EN DIRECT",W/2,qy+qs+150);
-    x.fillStyle="#A9C7E4"; x.font="500 40px 'Barlow', Arial, sans-serif"; x.fillText("Matchs · Classements · Finales · 1 contre 1",W/2,qy+qs+215);
+    var lw=260,lh=lw*img.height/img.width; x.fillStyle="#FFFFFF"; x.fillRect((W-lw)/2-20,70,lw+40,lh+40); x.drawImage(img,(W-lw)/2,90,lw,lh);
+    var y=90+lh+150; x.textAlign="center"; x.fillStyle="#F3EBD8";
+    x.font="800 120px 'Saira Condensed', Impact, sans-serif"; x.fillText("KIDS GOT GAME",W/2,y);
+    x.fillStyle="#A9C7E4"; x.font="500 40px 'Barlow', Arial, sans-serif"; x.fillText("Tournoi U13 · AEB Bagnolet · Samedi 31 octobre 2026",W/2,y+64);
+    var qs=600,qx=(W-qs)/2,qy=y+140; x.fillStyle="#FFFFFF"; x.fillRect(qx-36,qy-36,qs+72,qs+72);
+    if(window.QRCode){ var d=document.createElement("div"); try{ new window.QRCode(d,{text:qrLink(),width:qs,height:qs,colorDark:"#0B2C5B",colorLight:"#FFFFFF",correctLevel:window.QRCode.CorrectLevel.M}); var qc=d.querySelector("canvas"); if(qc) x.drawImage(qc,qx,qy,qs,qs); }catch(e){} }
+    x.fillStyle="#F3EBD8"; x.font="800 72px 'Saira Condensed', Impact, sans-serif"; x.fillText("SCANNEZ POUR LES SCORES EN DIRECT",W/2,qy+qs+140);
+    x.fillStyle="#A9C7E4"; x.font="500 38px 'Barlow', Arial, sans-serif"; x.fillText("Matchs · Classements · Finales · 1 contre 1",W/2,qy+qs+200);
   }; img.src=LOGO;
 }
 function downloadPoster(){ var cv=document.getElementById("poster"); if(!cv) return; var a=document.createElement("a"); a.href=cv.toDataURL("image/png"); a.download="Kids_Got_Game_QR.png"; document.body.appendChild(a); a.click(); a.remove(); }
@@ -416,7 +402,7 @@ function downloadPoster(){ var cv=document.getElementById("poster"); if(!cv) ret
 var VIEWS=[["direct","Direct"],["poules","Poules"],["finales","Finales"],["duels","1 contre 1"],["regles","Règles"]];
 var EDV=[["table","Table de marque"],["affiche","Affiche QR"]];
 function current(){ var h=(location.hash||"").replace("#",""); var all=VIEWS.concat(EDV).map(function(v){return v[0];}); return all.indexOf(h)>=0?h:"direct"; }
-function fmtTime(iso){ if(!iso) return "—"; var d=new Date(iso); if(isNaN(d)) return "—"; return ("0"+d.getHours()).slice(-2)+"h"+("0"+d.getMinutes()).slice(-2); }
+function fmtTime(iso){ if(!iso) return "—"; var d=new Date(iso); if(isNaN(d)) return "—"; try{ return d.toLocaleTimeString("fr-FR",{timeZone:"Europe/Paris",hour:"2-digit",minute:"2-digit"}).replace(":","h"); }catch(e){ return ("0"+d.getHours()).slice(-2)+"h"+("0"+d.getMinutes()).slice(-2); } }
 function shell(){
   document.getElementById("app").innerHTML='<header class="top"><div class="wrap"><img src="'+LOGO+'" alt="AEB Bagnolet"><div class="brand"><h1>Kids Got Game</h1><p>Tournoi U13 · AEB Bagnolet · 31 octobre 2026</p></div><div class="stamp" id="stamp"></div></div>'+
     '<nav class="tabs" aria-label="Sections"><div class="wrap" id="tabs"></div></nav></header><main class="wrap"><div class="banner" id="diag" hidden></div><div class="view" id="view"></div></main>'+
@@ -434,17 +420,19 @@ function render(){
   var S=state,h;
   switch(cur){ case "poules":h=vPoules(S);break; case "finales":h=vFinales(S);break; case "duels":h=vDuels(S);break; case "regles":h=vRegles();break;
     case "table":h=vTable();break; case "affiche":h=vAffiche();break; default:h=vDirect(S); }
-  document.getElementById("view").innerHTML=h;
+  var y=window.scrollY; document.getElementById("view").innerHTML=h; if(cur==="table") window.scrollTo(0,y);
   if(cur==="affiche") drawPoster();
   renderStamp(); renderBar();
 }
-var rT=null; function scheduleRender(){ clearTimeout(rT); rT=setTimeout(function(){ if(current()==="table") refreshAdmin(); else render(); renderStamp(); },120); }
+var rT=null; function scheduleRender(){ clearTimeout(rT); rT=setTimeout(function(){ if(current()==="table"&&isAdmin) refreshAdmin(); else render(); renderStamp(); },120); }
 function refreshAdmin(){
-  if(!isAdmin){ render(); return; }
-  var act=document.activeElement;
-  MATCHES.forEach(function(m){ var el=document.getElementById("ac-"+m.id); if(el && !el.contains(act)) el.outerHTML=acardHTML(m.id); });
-  document.querySelectorAll("input[data-team]").forEach(function(i){ if(i!==act&&!pending["team:"+i.dataset.team]) i.value=draft.teams[i.dataset.team]||""; });
-  document.querySelectorAll("input[data-pl]").forEach(function(i){ if(i!==act&&!pending["players:"+i.dataset.pl]) i.value=(draft.players[i.dataset.pl]||{})[i.dataset.k]||""; });
+  var act=document.activeElement, view=document.getElementById("view");
+  if(act&&view.contains(act)&&act.matches("input,select")){
+    // quelqu'un tape : on ne met à jour que les cartes de match qui ne sont pas en cours d'édition
+    Object.keys(draft.matches).forEach(function(id){ var el=document.getElementById("ac-"+id); if(el&&!el.contains(act)) el.outerHTML=acardHTML(id); });
+    return;
+  }
+  render();
 }
 function renderBar(){
   var b=document.getElementById("bar"); if(!b) return;
@@ -457,17 +445,24 @@ function renderBar(){
 }
 function toast(t){ var tb=document.getElementById("toastbox"); if(!tb) return; tb.innerHTML='<div class="toast" role="status">'+esc(t)+'</div>'; clearTimeout(toast._t); toast._t=setTimeout(function(){tb.innerHTML="";},3200); }
 
-/* ===== Synchronisation Supabase ===== */
-function applyRow(row){ setKey(state,row.cle,row.valeur); if(!pending[row.cle]) setKey(draft,row.cle,clone1(row.valeur)); if(row.updated_at&&(!state.updated||row.updated_at>state.updated)) state.updated=row.updated_at; }
+/* ===== Données ⇄ Supabase ===== */
+function keyVal(S,k){ if(k.indexOf("match:")===0) return S.matches[k.slice(6)]; if(k.indexOf("equipe:")===0) return S.teams[k.slice(7)]; if(k==="link") return S.link; }
+function setKey(S,k,v){
+  if(k.indexOf("match:")===0){ if(v==null) delete S.matches[k.slice(6)]; else S.matches[k.slice(6)]=v; }
+  else if(k.indexOf("equipe:")===0){ if(v==null) delete S.teams[k.slice(7)]; else S.teams[k.slice(7)]=v; }
+  else if(k==="link") S.link=v==null?"":v;
+  else if(S.legacy){ if(v==null) delete S.legacy[k]; else S.legacy[k]=v; } // anciennes lignes (team:A1, m:p1)
+}
+function cp(v){ return v==null?v:JSON.parse(JSON.stringify(v)); }
+function applyRow(row){ setKey(state,row.cle,row.valeur); if(!pending[row.cle]) setKey(draft,row.cle,cp(row.valeur)); if(row.updated_at&&(!state.updated||new Date(row.updated_at)>new Date(state.updated))) state.updated=row.updated_at; }
 function removeRow(cle){ setKey(state,cle,null); if(!pending[cle]) setKey(draft,cle,null); }
-function clone1(v){ return v==null?v:JSON.parse(JSON.stringify(v)); }
 function loadAll(){
   if(!sb) return Promise.resolve();
   return sb.from("kgg").select("cle,valeur,updated_at").then(function(res){
-    if(res.error){ conn="off"; lastErr="Lecture des scores impossible : "+(res.error.message||res.error.code||"erreur inconnue"); renderStamp(); return; } lastErr="";
-    var fresh={teams:{},m:{},players:{},link:"",updated:null}; state=fresh;
-    var keep={}; Object.keys(pending).forEach(function(k){ keep[k]=clone1(keyVal(draft,k)); });
-    draft={teams:{},m:{},players:{},link:"",updated:null};
+    if(res.error){ conn="off"; lastErr="Lecture des scores impossible : "+(res.error.message||res.error.code||"erreur inconnue"); renderStamp(); return; }
+    lastErr="";
+    var keep={}; Object.keys(pending).forEach(function(k){ keep[k]=cp(keyVal(draft,k)); });
+    state={teams:{},matches:{},link:"",updated:null,legacy:{}}; draft={teams:{},matches:{},link:"",updated:null,legacy:{}};
     res.data.forEach(applyRow);
     Object.keys(keep).forEach(function(k){ setKey(draft,k,keep[k]); });
     scheduleRender();
@@ -479,29 +474,27 @@ function subscribe(){
   channel=sb.channel("kgg-live").on("postgres_changes",{event:"*",schema:"public",table:"kgg"},function(p){
     if(p.eventType==="DELETE"){ if(p.old&&p.old.cle) removeRow(p.old.cle); } else if(p.new) applyRow(p.new);
     scheduleRender();
-  }).subscribe(function(status){
+  }).subscribe(function(status,err){
     if(status==="SUBSCRIBED"){ conn="live"; loadAll(); }
-    else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){ conn="off"; if(!lastErr) lastErr="Temps réel indisponible ("+status+")"+(arguments[1]&&arguments[1].message?" : "+arguments[1].message:""); }
+    else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){ conn="off"; if(!lastErr) lastErr="Temps réel indisponible ("+status+")"+(err&&err.message?" : "+err.message:""); }
     renderStamp();
   });
 }
-function markPending(k){ pending[k]=true; saveState="idle"; clearTimeout(saveTimer); saveTimer=setTimeout(flush,700); renderBar(); }
+function markPending(k){ pending[k]=true; saveState="idle"; clearTimeout(saveTimer); saveTimer=setTimeout(flush,700); renderBar(); var el=k.indexOf("match:")===0&&document.getElementById("ac-"+k.slice(6)); if(el) el.classList.add("dirty"); }
 function flush(){
   if(saving){ clearTimeout(saveTimer); saveTimer=setTimeout(flush,400); return; }
   var keys=Object.keys(pending); if(!keys.length||!sb) return;
-  var snap={}; keys.forEach(function(k){ snap[k]=JSON.stringify(keyVal(draft,k)===undefined?null:keyVal(draft,k)); });
-  var rows=keys.map(function(k){ var v=keyVal(draft,k); return {cle:k,valeur:v===undefined?null:v}; });
-  var ups=rows.filter(function(r){return r.valeur!=null;}), dels=rows.filter(function(r){return r.valeur==null;}).map(function(r){return r.cle;});
+  var snap={}; keys.forEach(function(k){ snap[k]=JSON.stringify(keyVal(draft,k)==null?null:keyVal(draft,k)); });
+  var ups=[],dels=[]; keys.forEach(function(k){ var v=keyVal(draft,k); if(v==null) dels.push(k); else ups.push({cle:k,valeur:v}); });
   saving=true; renderBar();
   var p1=ups.length?sb.from("kgg").upsert(ups,{onConflict:"cle"}):Promise.resolve({});
   var p2=dels.length?sb.from("kgg").delete().in("cle",dels):Promise.resolve({});
   Promise.all([p1,p2]).then(function(rs){
-    saving=false;
-    var err=rs[0].error||rs[1].error;
+    saving=false; var err=rs[0].error||rs[1].error;
     if(err){ saveState="error"; console.error(err); renderBar(); clearTimeout(saveTimer); saveTimer=setTimeout(flush,5000); return; }
-    keys.forEach(function(k){ var now=JSON.stringify(keyVal(draft,k)===undefined?null:keyVal(draft,k)); if(now===snap[k]){ delete pending[k]; setKey(state,k,clone1(keyVal(draft,k))); } });
+    keys.forEach(function(k){ var now=JSON.stringify(keyVal(draft,k)==null?null:keyVal(draft,k)); if(now===snap[k]){ delete pending[k]; setKey(state,k,cp(keyVal(draft,k))); } });
     state.updated=new Date().toISOString(); saveState="ok";
-    MATCHES.forEach(function(m){ var el=document.getElementById("ac-"+m.id); if(el) el.classList.toggle("dirty",cardDirty(m.id)); });
+    Object.keys(draft.matches).forEach(function(id){ var el=document.getElementById("ac-"+id); if(el) el.classList.toggle("dirty",!!pending["match:"+id]); });
     renderBar(); renderStamp();
     if(Object.keys(pending).length){ clearTimeout(saveTimer); saveTimer=setTimeout(flush,300); }
   }).catch(function(e){ saving=false; saveState="error"; console.error(e); renderBar(); clearTimeout(saveTimer); saveTimer=setTimeout(flush,5000); });
@@ -512,39 +505,75 @@ function checkAdmin(){
   sb.from("kgg_admins").select("email").limit(1).then(function(r){ isAdmin=!r.error&&r.data&&r.data.length>0; adminChecked=true; render(); });
 }
 
-/* ===== Événements ===== */
-function setScore(id,k,v){ var r=draft.m[id]=Object.assign({h:null,a:null,s:"av"},draft.m[id]||{}); r[k]=v; if(r.s==="av"&&v!=null) r.s="live"; markPending("m:"+id); }
+/* ===== Actions de la table de marque ===== */
+function mset(id,f,v){ var m=draft.matches[id]=Object.assign({},draft.matches[id]||{}); if(v===""||v==null) delete m[f]; else m[f]=v; markPending("match:"+id); return m; }
+function tset(id,f,v){ var t=draft.teams[id]=Object.assign({},draft.teams[id]||{}); t[f]=v; markPending("equipe:"+id); }
 function rerenderCard(id){ var el=document.getElementById("ac-"+id); if(el) el.outerHTML=acardHTML(id); }
+function rerenderAllCards(except){ Object.keys(draft.matches).forEach(function(id){ var el=document.getElementById("ac-"+id); if(el&&!(except&&el.contains(except))) el.outerHTML=acardHTML(id); }); }
+function setScore(id,k,v){ var m=mset(id,k==="h"?"hs":"as",v); if((!m.s||m.s==="av")&&v!=null) mset(id,"s","live"); }
+function loadOfficial(){
+  var legacy=draft.legacy||{}, o=Date.now();
+  OFFICIAL.teams.forEach(function(t,i){ var old=legacy["team:"+t[0]]; draft.teams[t[0]]={nom:(typeof old==="string"?old:""),poule:t[1],o:i}; markPending("equipe:"+t[0]); });
+  OFFICIAL.matches.forEach(function(r,i){ var m=Object.assign({t:r[1],c:r[2],k:r[3],o:o+i},r[4]?{l:r[4]}:{},r[5]); Object.keys(m).forEach(function(k){ if(m[k]==="") delete m[k]; });
+    var old=legacy["m:"+r[0]]; if(old&&typeof old==="object"){ if(old.h!=null) m.hs=old.h; if(old.a!=null) m.as=old.a; if(old.s) m.s=old.s; }
+    draft.matches[r[0]]=m; markPending("match:"+r[0]); });
+  render(); toast("Programme officiel chargé");
+}
+function genPoolMatches(){
+  var n=0,o=Date.now();
+  poulesOf(draft).forEach(function(p){
+    var ts=teamList(draft).filter(function(t){return t.poule===p;});
+    for(var i=0;i<ts.length;i++) for(var j=i+1;j<ts.length;j++){
+      var a=ts[i].id,b=ts[j].id, exists=Object.keys(draft.matches).some(function(k){ var m=draft.matches[k]; return m.k==="poule"&&((m.h===a&&m.a===b)||(m.h===b&&m.a===a)); });
+      if(!exists){ var id=uid("m"); draft.matches[id]={k:"poule",h:a,a:b,o:o+n}; markPending("match:"+id); n++; }
+    }
+  });
+  render(); toast(n?n+" match"+(n>1?"s":"")+" ajouté"+(n>1?"s":""):"Tous les matchs de poule existent déjà");
+}
+
 document.addEventListener("click",function(ev){
   var b=ev.target.closest("[data-act]"); if(!b) return; var act=b.getAttribute("data-act"),id=b.getAttribute("data-id");
-  if(act==="add"){ var k=b.getAttribute("data-k"),o=k==="h"?"a":"h",cur=mOf(draft,id)[k]||0; setScore(id,k,Math.max(0,cur+parseInt(b.getAttribute("data-v"),10)));
-    if(draft.m[id][o]==null) draft.m[id][o]=0; rerenderCard(id); }
-  else if(act==="st"){ var v=b.getAttribute("data-v"); draft.m[id]=Object.assign({h:null,a:null},draft.m[id]||{}); draft.m[id].s=v;
-    if(v!=="av"){ if(draft.m[id].h==null) draft.m[id].h=0; if(draft.m[id].a==null) draft.m[id].a=0; }
-    markPending("m:"+id); MATCHES.forEach(function(m){ rerenderCard(m.id); }); }
-  else if(act==="retry"){ flush(); }
+  if(act==="add"){ var k=b.getAttribute("data-k"),m=draft.matches[id]||{},f=k==="h"?"hs":"as",o=k==="h"?"as":"hs"; setScore(id,k,Math.max(0,(m[f]||0)+parseInt(b.getAttribute("data-v"),10))); if(draft.matches[id][o]==null) mset(id,o,0); rerenderCard(id); }
+  else if(act==="st"){ var v=b.getAttribute("data-v"); mset(id,"s",v); if(v!=="av"){ if(draft.matches[id].hs==null) mset(id,"hs",0); if(draft.matches[id].as==null) mset(id,"as",0); } rerenderAllCards(); }
+  else if(act==="edit"){ openEdit[id]=!openEdit[id]; delete confirmDel[id]; rerenderCard(id); }
+  else if(act==="del"){ confirmDel[id]=1; rerenderCard(id); }
+  else if(act==="delno"){ delete confirmDel[id]; rerenderCard(id); }
+  else if(act==="delyes"){ delete draft.matches[id]; delete confirmDel[id]; delete openEdit[id]; markPending("match:"+id); var el=document.getElementById("ac-"+id); if(el) el.remove(); toast("Match supprimé"); }
+  else if(act==="madd"){ var k2=b.getAttribute("data-k"), nid=uid("m"); draft.matches[nid]={k:k2,o:Date.now()}; openEdit[nid]=1; markPending("match:"+nid); render(); var ne=document.getElementById("ac-"+nid); if(ne){ ne.scrollIntoView({block:"center"}); var f=ne.querySelector("input,select"); if(f) f.focus(); } }
+  else if(act==="tadd"){ var ts=teamList(draft), tid=uid("t"); draft.teams[tid]={nom:"",poule:ts.length?ts[ts.length-1].poule:"A",o:Date.now()}; markPending("equipe:"+tid); render(); var ti=document.querySelector('input[data-tf="nom"][data-id="'+tid+'"]'); if(ti) ti.focus(); }
+  else if(act==="tdel"){ confirmDel["t"+id]=1; render(); }
+  else if(act==="tdelno"){ delete confirmDel["t"+id]; render(); }
+  else if(act==="tdelyes"){ delete confirmDel["t"+id]; delete draft.teams[id]; markPending("equipe:"+id);
+    Object.keys(draft.matches).forEach(function(mid){ var m=draft.matches[mid]; if(m.h===id) mset(mid,"h",null); if(m.a===id) mset(mid,"a",null); }); render(); toast("Équipe retirée"); }
+  else if(act==="gen") genPoolMatches();
+  else if(act==="official") loadOfficial();
+  else if(act==="retry") flush();
   else if(act==="reset1"){ document.getElementById("resetbox").innerHTML='<div class="confirm"><b style="flex:1">Effacer tous les scores ?</b><button class="btn" data-act="reset0">Garder</button><button class="btn dng" data-act="reset2">Oui, effacer</button></div>'; }
-  else if(act==="reset0"){ render(); }
-  else if(act==="reset2"){ MATCHES.forEach(function(m){ delete draft.m[m.id]; markPending("m:"+m.id); }); render(); toast("Scores effacés"); }
-  else if(act==="logout"){ sb.auth.signOut().then(function(){ location.hash="#direct"; }); }
+  else if(act==="reset0") render();
+  else if(act==="reset2"){ Object.keys(draft.matches).forEach(function(mid){ ["hs","as","s"].forEach(function(f){ mset(mid,f,null); }); }); render(); toast("Scores effacés"); }
+  else if(act==="logout") sb.auth.signOut().then(function(){ location.hash="#direct"; });
   else if(act==="dl") downloadPoster();
 });
 document.addEventListener("submit",function(ev){
   if(ev.target.id!=="loginform") return; ev.preventDefault();
   var btn=document.getElementById("lg-btn"); btn.disabled=true; btn.textContent="Connexion…";
   sb.auth.signInWithPassword({email:document.getElementById("lg-mail").value.trim(),password:document.getElementById("lg-pass").value}).then(function(r){
-    if(r.error){ var m=(r.error.message||"")+""; vTable.msg=/invalid login/i.test(m)?"E-mail ou mot de passe incorrect.":/not confirmed/i.test(m)?"Ce compte n'est pas confirmé : dans Supabase → Authentication → Users, confirmez l'utilisateur (ou recréez-le avec Auto Confirm User).":/api key|apikey|jwt|unauthorized/i.test(m)?"Clé Supabase refusée : vérifiez la clé anon/publishable dans index.html.":/fetch|network|failed/i.test(m)?"Impossible de joindre Supabase : vérifiez l'URL du projet dans index.html et la connexion internet.":"Erreur Supabase : "+m; render(); } else vTable.msg="";
+    if(r.error){ var m=(r.error.message||"")+""; vTable.msg=/invalid login/i.test(m)?"E-mail ou mot de passe incorrect.":/not confirmed/i.test(m)?"Ce compte n'est pas confirmé : dans Supabase → Authentication → Users, confirmez l'utilisateur.":/fetch|network|failed/i.test(m)?"Impossible de joindre Supabase : vérifiez la connexion internet et config.js.":"Erreur Supabase : "+m; render(); } else vTable.msg="";
   });
 });
 document.addEventListener("input",function(ev){
   var t=ev.target; if(!isAdmin) return;
-  if(t.matches("input[data-id]")){ var raw=t.value.replace(/[^0-9]/g,""); setScore(t.dataset.id,t.dataset.k,raw===""?null:parseInt(raw,10));
-    var card=document.getElementById("ac-"+t.dataset.id); if(card) card.classList.add("dirty"); }
-  else if(t.matches("input[data-team]")){ draft.teams[t.dataset.team]=t.value; markPending("team:"+t.dataset.team); }
-  else if(t.matches("input[data-pl]")){ var p=draft.players[t.dataset.pl]=Object.assign({},draft.players[t.dataset.pl]||{}); p[t.dataset.k]=t.value; markPending("players:"+t.dataset.pl); }
+  if(t.matches("input[data-score]")){ var raw=t.value.replace(/[^0-9]/g,""); setScore(t.dataset.score,t.dataset.k,raw===""?null:parseInt(raw,10)); }
+  else if(t.matches("input[data-mf]")){ mset(t.dataset.id,t.dataset.mf,t.value); }
+  else if(t.matches("input[data-tf]")){ tset(t.dataset.id,t.dataset.tf,t.value); rerenderAllCards(t); }
   else if(t.matches("input[data-link]")){ draft.link=t.value.trim(); markPending("link"); }
 });
-document.addEventListener("change",function(ev){ if(ev.target.matches("input[data-id]")) rerenderCard(ev.target.dataset.id); });
+document.addEventListener("change",function(ev){
+  var t=ev.target; if(!isAdmin) return;
+  if(t.matches("select[data-mf]")){ mset(t.dataset.id,t.dataset.mf,t.value||null); rerenderCard(t.dataset.id); }
+  else if(t.matches("select[data-tf]")){ tset(t.dataset.id,t.dataset.tf,t.value); render(); }
+  else if(t.matches("input[data-score]")||t.matches("input[data-mf]")){ var id=t.dataset.score||t.dataset.id; if(t.dataset.mf==="t"){ render(); } else rerenderCard(id); }
+});
 window.addEventListener("hashchange",render);
 document.addEventListener("visibilitychange",function(){ if(document.visibilityState==="visible"){ if(conn!=="live") subscribe(); else loadAll(); } });
 window.addEventListener("online",function(){ subscribe(); if(Object.keys(pending).length) flush(); });
@@ -553,16 +582,15 @@ window.addEventListener("beforeunload",function(e){ if(Object.keys(pending).leng
 /* ===== Démarrage ===== */
 shell(); render();
 var CFG=window.KGG_CONFIG||{};
-if(window.supabase && CFG.url && CFG.anonKey && CFG.url.indexOf("COLLEZ")<0){
+if(window.supabase && CFG.url && CFG.anonKey && CFG.anonKey.indexOf("COLLEZ")<0){
   sb=window.supabase.createClient(CFG.url,CFG.anonKey,{realtime:{params:{eventsPerSecond:10}}});
   loadAll(); subscribe();
   setInterval(loadAll,60000); // filet de sécurité si un téléphone perd la connexion en silence
   sb.auth.getSession().then(function(r){ session=r.data.session; checkAdmin(); });
-  sb.auth.onAuthStateChange(function(evt,s){ var had=!!session; session=s; if(evt==="SIGNED_IN"&&!had){ checkAdmin(); } else if(evt==="SIGNED_OUT"){ isAdmin=false; render(); } });
-} else { conn="off"; lastErr=window.supabase?"Clés Supabase non renseignées dans index.html.":"La bibliothèque Supabase ne s'est pas chargée (connexion internet ou bloqueur de publicité)."; renderStamp(); }
+  sb.auth.onAuthStateChange(function(evt,s){ var had=!!session; session=s; if(evt==="SIGNED_IN"&&!had) checkAdmin(); else if(evt==="SIGNED_OUT"){ isAdmin=false; render(); } });
+} else { conn="off"; lastErr=window.supabase?(window.KGG_CONFIG?"Clés Supabase non renseignées dans config.js.":"Le fichier config.js est introuvable : envoyez-le sur GitHub à côté de index.html."):"La bibliothèque Supabase ne s'est pas chargée (connexion internet ou bloqueur de publicité)."; renderStamp(); }
 if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ if(current()==="affiche") drawPoster(); });
 })();
-
 </script>
 </body>
 </html>
