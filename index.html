@@ -275,7 +275,7 @@ function rowHTML(S,m,opt){
   var sd=sides(S,m),w=winSide(m),show=(m.s==="live"||m.s==="fin")&&m.hs!=null&&m.as!=null;
   function side(k){ var cls=w?(w===k?"w":"l"):""; return '<div class="side '+cls+'"><span class="nm'+(sd[k].ph?' ph':'')+'">'+esc(sd[k].name)+'</span><span class="sc">'+(show?(k==="h"?m.hs:m.as):"")+'</span></div>'; }
   var pill=m.s==="live"?'<span class="pill live">Direct</span>':m.s==="fin"?'<span class="pill fin">Fin</span>':'<span class="pill">'+esc(hhmm(m.t))+'</span>';
-  var sub=(opt&&opt.sub)?label(S,m):(m.c||label(S,m));
+  var sub=(opt&&opt.sub)?[label(S,m),m.c].filter(Boolean).join(' · '):(m.c||label(S,m));
   return '<div class="row"><div class="when">'+esc(hhmm(m.t))+'<small>'+esc(sub)+'</small></div><div class="pair">'+side("h")+side("a")+'</div>'+pill+'</div>';
 }
 function panel(S,list,opt){ if(!list.length) return '<div class="panel empty">Aucun match pour l\'instant.</div>'; return '<div class="panel">'+list.map(function(m){return rowHTML(S,m,opt);}).join("")+'</div>'; }
@@ -328,13 +328,13 @@ function acardHTML(id){
   function sbt(v,t,c){ return '<button class="'+(c||"")+'" data-act="st" data-id="'+id+'" data-v="'+v+'" aria-pressed="'+(st===v)+'">'+t+'</button>'; }
   var h='<div class="acard'+(pending["match:"+id]?" dirty":"")+'" id="ac-'+id+'"><div class="hd"><b>'+esc(hhmm(m.t))+' · '+esc(label(draft,m))+'</b><span>'+esc(m.c||"")+' <button class="linkbtn" data-act="edit" data-id="'+id+'">'+(ed?"Fermer":"Modifier")+'</button></span></div>';
   if(ed){
-    h+='<div class="efields"><label>Heure<input type="time" data-mf="t" data-id="'+id+'" value="'+esc(m.t||"")+'"></label><label>Terrain<input data-mf="c" data-id="'+id+'" value="'+esc(m.c||"")+'" placeholder="Latéral 1"></label>';
+    h+='<div class="efields"><label>Heure<input type="time" data-mf="t" data-id="'+id+'" value="'+esc(m.t||"")+'"></label>'+(m.k==="duel"?'':'<label>Terrain<input data-mf="c" data-id="'+id+'" value="'+esc(m.c||"")+'" placeholder="Latéral 1"></label>');
     if(m.k!=="poule") h+='<label class="full">Nom du match<input data-mf="l" data-id="'+id+'" value="'+esc(m.l||"")+'" placeholder="Demi-finale 1"></label>';
-    if(m.k==="duel") h+='<label>Joueur 1<input data-mf="hn" data-id="'+id+'" value="'+esc(m.hn||"")+'"></label><label>Joueur 2<input data-mf="an" data-id="'+id+'" value="'+esc(m.an||"")+'"></label>';
-    else h+='<label>Équipe 1<select data-mf="h" data-id="'+id+'">'+teamOptions(draft,m.h)+'</select></label><label>Équipe 2<select data-mf="a" data-id="'+id+'">'+teamOptions(draft,m.a)+'</select></label>';
+    if(m.k!=="duel") h+='<label>Équipe 1<select data-mf="h" data-id="'+id+'">'+teamOptions(draft,m.h)+'</select></label><label>Équipe 2<select data-mf="a" data-id="'+id+'">'+teamOptions(draft,m.a)+'</select></label>';
     if(m.k==="final") h+='<label>Texte si équipe 1 à définir<input data-mf="hp" data-id="'+id+'" value="'+esc(m.hp||"")+'" placeholder="1er poule A"></label><label>Texte si équipe 2 à définir<input data-mf="ap" data-id="'+id+'" value="'+esc(m.ap||"")+'" placeholder="2e poule B"></label>';
     h+='</div>'+(confirmDel[id]?'<div class="confirm"><b style="flex:1">Supprimer ce match ?</b><button class="btn" data-act="delno" data-id="'+id+'">Garder</button><button class="btn dng" data-act="delyes" data-id="'+id+'">Supprimer</button></div>':'<button class="btn dng" data-act="del" data-id="'+id+'">Supprimer ce match</button>');
   }
+  if(m.k==="duel") h+='<div class="efields"><label class="full">Terrain / lieu du duel<input data-mf="c" data-id="'+id+'" value="'+esc(m.c||"")+'" placeholder="Ex. Terrain principal, Latéral 2…"></label><label>Joueur 1<input data-mf="hn" data-id="'+id+'" value="'+esc(m.hn||"")+'" placeholder="Nom (équipe)"></label><label>Joueur 2<input data-mf="an" data-id="'+id+'" value="'+esc(m.an||"")+'" placeholder="Nom (équipe)"></label></div>';
   return h+line("h")+line("a")+'<div class="seg">'+sbt("av","À venir")+sbt("live","En direct","live")+sbt("fin","Terminé")+'</div></div>';
 }
 function teamsHTML(){
