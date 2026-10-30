@@ -344,9 +344,9 @@ function vPoules(S){
   }).join("")+'</div><p class="note">Victoire 2 pts · Défaite 1 pt · Forfait 0. Égalité : confrontations directes, puis différence de points, puis points marqués.</p>';
 }
 function vFinales(S){ return '<section><h2 class="sec">Phases finales</h2>'+panel(S,mList(S,"final"),{sub:1})+'</section>'; }
-function vDuels(S){ return '<section><h2 class="sec">Concours 1 contre 1 <small>3 min · demi-terrain · mort subite si égalité</small></h2>'+panel(S,mList(S,"duel"),{sub:1})+'</section>'; }
+function vDuels(S){ return '<section><h2 class="sec">Concours 1 contre 1 <small>2 min · demi-terrain · mort subite si égalité</small></h2>'+panel(S,mList(S,"duel"),{sub:1})+'</section>'; }
 function vRegles(){
-  var R=[["Paniers","Tous à 2 points, aucun panier à 3 points"],["Faute sur tir réussi","2 points + 1 lancer franc"],["Faute sur tir manqué","2 lancers francs"],["Fautes","4 fautes personnelles = sortie définitive"],["Poules","4vs4 sur les terrains latéraux · 2 × 8 min, chrono arrêté seulement sur les temps morts"],["Classement","4vs4 · 2 × 5 min"],["Demi-finales, petite finale","5vs5 · 2 × 5 min"],["Finale","5vs5 · 2 × 10 min · prolongation 3 min"],["Temps morts","1 par équipe et par mi-temps (30 s)"],["1 contre 1","1 joueur par équipe · 3 min sur un demi-terrain · 4 fautes = défaite · mort subite si égalité"]];
+  var R=[["Paniers","Tous à 2 points, aucun panier à 3 points"],["Faute sur tir réussi","2 points + 1 lancer franc"],["Faute sur tir manqué","2 lancers francs"],["Fautes","4 fautes personnelles = sortie définitive"],["Poules","4vs4 sur les terrains latéraux · 2 × 4 min, chrono arrêté seulement sur les temps morts"],["Classement","4vs4 · 2 × 5 min"],["Demi-finales, petite finale","5vs5 · 2 × 5 min"],["Finale","5vs5 · 2 × 10 min · prolongation 3 min"],["Temps morts","1 par équipe et par mi-temps (30 s)"],["1 contre 1","2 joueurs max par équipe · 2 min sur un demi-terrain · 4 fautes = défaite · mort subite si égalité"]];
   return '<section><h2 class="sec">Règles du tournoi <small>U13</small></h2><div class="panel"><dl class="rules">'+R.map(function(r){return '<dt>'+r[0]+'</dt><dd>'+r[1]+'</dd>';}).join("")+'</dl></div></section>';
 }
 
