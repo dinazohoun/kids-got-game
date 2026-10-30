@@ -199,7 +199,7 @@ section>.tools{padding:10px 0 0}
      link         → lien du QR code
    ===================================================================== */
 var POULES = ["A","B","C","D","E","F"];
-var KINDS = {poule:"Match de poule", duel:"Concours 2 contre 2", final:"Phase finale"};
+var KINDS = {poule:"Match de poule", duel:"Concours 1 contre 1", final:"Phase finale"};
 
 /* Programme officiel du 31/10/2026 (chargeable en un clic) */
 var OFFICIAL = {
@@ -216,15 +216,15 @@ var OFFICIAL = {
     ["d1","12:35","","duel","Demi 1",{hn:"",an:""}],["d2","12:50","","duel","Demi 2",{}],
     ["c1","14:05","","final","Places 5-6",{hp:"3e poule A",ap:"3e poule B"}],["c2","14:25","","final","Places 7-8",{hp:"4e poule A",ap:"4e poule B"}],
     ["s1","15:05","Terrain principal","final","Demi-finale 1",{hp:"1er poule A",ap:"2e poule B"}],["s2","15:25","Terrain principal","final","Demi-finale 2",{hp:"1er poule B",ap:"2e poule A"}],
-    ["f1","16:05","","duel","Finale 2 contre 2",{}],
+    ["f1","16:05","","duel","Finale 1 contre 1",{}],
     ["pf","16:15","Terrain principal","final","Petite finale",{hp:"Perdant demi 1",ap:"Perdant demi 2"}],
     ["ff","16:55","Terrain principal","final","Finale Kids Got Game",{hp:"Vainqueur demi 1",ap:"Vainqueur demi 2"}]
   ]
 };
 
-/* Programme 10 équipes · 2 poules de 5 · concours 2 contre 2 (calculé :
+/* Programme 10 équipes · 2 poules de 5 · concours 1 contre 1 (calculé :
    chaque équipe enchaîne au plus une fois deux matchs de poule ;
-   le 2 contre 2 se joue quand les terrains latéraux sont libres, sur les deux paniers du terrain principal) */
+   le 1 contre 1 se joue quand les terrains latéraux sont libres, sur les deux paniers du terrain principal) */
 var TEN = {
   teams:[["A1","A"],["A2","A"],["A3","A"],["A4","A"],["A5","A"],["B1","B"],["B2","B"],["B3","B"],["B4","B"],["B5","B"]],
   matches:[
@@ -243,7 +243,7 @@ var TEN = {
     ["y06","13:45","Terrain principal · panier 2","duel","Quart 4",{h:"B5",ap:"Vainqueur barrage 1"}],
     ["y07","14:30","Terrain principal · panier 1","duel","Demi 1",{hp:"Vainqueur quart 1",ap:"Vainqueur quart 2"}],
     ["y08","14:30","Terrain principal · panier 2","duel","Demi 2",{hp:"Vainqueur quart 3",ap:"Vainqueur quart 4"}],
-    ["y09","16:05","Terrain principal","duel","Finale 2 contre 2",{hp:"Vainqueur demi 1",ap:"Vainqueur demi 2"}],
+    ["y09","16:05","Terrain principal","duel","Finale 1 contre 1",{hp:"Vainqueur demi 1",ap:"Vainqueur demi 2"}],
     ["z01","14:05","Latéral 1","final","Places 5-6",{hp:"3e poule A",ap:"3e poule B"}],
     ["z02","14:05","Latéral 2","final","Places 7-8",{hp:"4e poule A",ap:"4e poule B"}],
     ["z03","14:05","Latéral 3","final","Places 9-10",{hp:"5e poule A",ap:"5e poule B"}],
@@ -277,7 +277,7 @@ function teamList(S){ return Object.keys(S.teams).map(function(id){ return Objec
 function poulesOf(S){ var p={}; teamList(S).forEach(function(t){ if(t.poule) p[t.poule]=1; }); return Object.keys(p).sort(); }
 function pouleOfMatch(S,m){ var a=S.teams[m.h],b=S.teams[m.a]; return a&&b&&a.poule===b.poule?a.poule:null; }
 function sides(S,m){
-  if(m.k==="duel"){ var dd=function(nm,tid,ph){ if(nm) return {name:nm}; var tn=tid&&teamName(S,tid); return tn?{name:"Duo "+tn}:{name:ph||"Duo à désigner",ph:true}; };
+  if(m.k==="duel"){ var dd=function(nm,tid,ph){ if(nm) return {name:nm}; var tn=tid&&teamName(S,tid); return tn?{name:"Joueur "+tn}:{name:ph||"Joueur à désigner",ph:true}; };
     return {h:dd(m.hn,m.h,m.hp), a:dd(m.an,m.a,m.ap)}; }
   function one(id,ph){ var n=id&&teamName(S,id); return n?{name:n}:{name:ph||"À définir",ph:true}; }
   return {h:one(m.h,m.hp), a:one(m.a,m.ap)};
@@ -344,9 +344,9 @@ function vPoules(S){
   }).join("")+'</div><p class="note">Victoire 2 pts · Défaite 1 pt · Forfait 0. Égalité : confrontations directes, puis différence de points, puis points marqués.</p>';
 }
 function vFinales(S){ return '<section><h2 class="sec">Phases finales</h2>'+panel(S,mList(S,"final"),{sub:1})+'</section>'; }
-function vDuels(S){ return '<section><h2 class="sec">Concours 2 contre 2 <small>4 min · demi-terrain · mort subite si égalité</small></h2>'+panel(S,mList(S,"duel"),{sub:1})+'</section>'; }
+function vDuels(S){ return '<section><h2 class="sec">Concours 1 contre 1 <small>3 min · demi-terrain · mort subite si égalité</small></h2>'+panel(S,mList(S,"duel"),{sub:1})+'</section>'; }
 function vRegles(){
-  var R=[["Paniers","Tous à 2 points, aucun panier à 3 points"],["Faute sur tir réussi","2 points + 1 lancer franc"],["Faute sur tir manqué","2 lancers francs"],["Fautes","4 fautes personnelles = sortie définitive"],["Poules","4vs4 sur les terrains latéraux · 2 × 8 min, chrono arrêté seulement sur les temps morts"],["Classement","4vs4 · 2 × 5 min"],["Demi-finales, petite finale","5vs5 · 2 × 5 min"],["Finale","5vs5 · 2 × 10 min · prolongation 3 min"],["Temps morts","1 par équipe et par mi-temps (30 s)"],["2 contre 2","2 joueurs par équipe · 4 min sur un demi-terrain · 4 fautes d'un joueur = défaite du duo · mort subite si égalité"]];
+  var R=[["Paniers","Tous à 2 points, aucun panier à 3 points"],["Faute sur tir réussi","2 points + 1 lancer franc"],["Faute sur tir manqué","2 lancers francs"],["Fautes","4 fautes personnelles = sortie définitive"],["Poules","4vs4 sur les terrains latéraux · 2 × 8 min, chrono arrêté seulement sur les temps morts"],["Classement","4vs4 · 2 × 5 min"],["Demi-finales, petite finale","5vs5 · 2 × 5 min"],["Finale","5vs5 · 2 × 10 min · prolongation 3 min"],["Temps morts","1 par équipe et par mi-temps (30 s)"],["1 contre 1","1 joueur par équipe · 3 min sur un demi-terrain · 4 fautes = défaite · mort subite si égalité"]];
   return '<section><h2 class="sec">Règles du tournoi <small>U13</small></h2><div class="panel"><dl class="rules">'+R.map(function(r){return '<dt>'+r[0]+'</dt><dd>'+r[1]+'</dd>';}).join("")+'</dl></div></section>';
 }
 
@@ -368,12 +368,12 @@ function acardHTML(id){
   if(ed){
     h+='<div class="efields"><label>Heure<input type="time" data-mf="t" data-id="'+id+'" value="'+esc(m.t||"")+'"></label>'+(m.k==="duel"?'':'<label>Terrain<input data-mf="c" data-id="'+id+'" value="'+esc(m.c||"")+'" placeholder="Latéral 1"></label>');
     if(m.k!=="poule") h+='<label class="full">Nom du match<input data-mf="l" data-id="'+id+'" value="'+esc(m.l||"")+'" placeholder="Demi-finale 1"></label>';
-    h+='<label>'+(m.k==="duel"?"Duo de l\'équipe 1":"Équipe 1")+'<select data-mf="h" data-id="'+id+'">'+teamOptions(draft,m.h)+'</select></label><label>'+(m.k==="duel"?"Duo de l\'équipe 2":"Équipe 2")+'<select data-mf="a" data-id="'+id+'">'+teamOptions(draft,m.a)+'</select></label>';
+    h+='<label>'+(m.k==="duel"?"Joueur de l\'équipe 1":"Équipe 1")+'<select data-mf="h" data-id="'+id+'">'+teamOptions(draft,m.h)+'</select></label><label>'+(m.k==="duel"?"Joueur de l\'équipe 2":"Équipe 2")+'<select data-mf="a" data-id="'+id+'">'+teamOptions(draft,m.a)+'</select></label>';
     if(false) h+='<label>Équipe 1<select data-mf="h" data-id="'+id+'">'+teamOptions(draft,m.h)+'</select></label><label>Équipe 2<select data-mf="a" data-id="'+id+'">'+teamOptions(draft,m.a)+'</select></label>';
     if(m.k!=="poule") h+='<label>Texte si équipe 1 à définir<input data-mf="hp" data-id="'+id+'" value="'+esc(m.hp||"")+'" placeholder="1er poule A"></label><label>Texte si équipe 2 à définir<input data-mf="ap" data-id="'+id+'" value="'+esc(m.ap||"")+'" placeholder="2e poule B"></label>';
     h+='</div>'+(confirmDel[id]?'<div class="confirm"><b style="flex:1">Supprimer ce match ?</b><button class="btn" data-act="delno" data-id="'+id+'">Garder</button><button class="btn dng" data-act="delyes" data-id="'+id+'">Supprimer</button></div>':'<button class="btn dng" data-act="del" data-id="'+id+'">Supprimer ce match</button>');
   }
-  if(m.k==="duel") h+='<div class="efields"><label class="full">Terrain / lieu du duel<input data-mf="c" data-id="'+id+'" value="'+esc(m.c||"")+'" placeholder="Ex. Terrain principal, Latéral 2…"></label><label>Duo 1 (prénoms)<input data-mf="hn" data-id="'+id+'" value="'+esc(m.hn||"")+'" placeholder="Ex. Lina & Sami"></label><label>Duo 2 (prénoms)<input data-mf="an" data-id="'+id+'" value="'+esc(m.an||"")+'" placeholder="Ex. Noah & Inès"></label></div>';
+  if(m.k==="duel") h+='<div class="efields"><label class="full">Terrain / lieu du duel<input data-mf="c" data-id="'+id+'" value="'+esc(m.c||"")+'" placeholder="Ex. Terrain principal, Latéral 2…"></label><label>Joueur 1 (prénom)<input data-mf="hn" data-id="'+id+'" value="'+esc(m.hn||"")+'" placeholder="Ex. Lina"></label><label>Joueur 2 (prénom)<input data-mf="an" data-id="'+id+'" value="'+esc(m.an||"")+'" placeholder="Ex. Noah"></label></div>';
   if(warns.length) h+='<div class="warn">⚠ '+warns.map(esc).join("<br>⚠ ")+'</div>';
   return h+line("h")+line("a")+'<div class="seg">'+sbt("av","À venir")+sbt("live","En direct","live")+sbt("fin","Terminé")+'</div></div>';
 }
@@ -432,7 +432,7 @@ function vTable(){
   var empty=!Object.keys(draft.matches).length&&!Object.keys(draft.teams).length;
   h+='<section class="panel wide" id="presetbox"><b>'+(empty?"Le programme est vide.":"Programme du tournoi")+'</b><span class="note" style="margin:0">Chargez un programme complet, puis ajoutez, retirez ou modifiez ce que vous voulez. Les noms d\'équipes déjà saisis sont conservés.</span>'+
     (confirmDel.preset?'<div class="confirm" style="padding:0"><b style="flex:1">Remplacer tout le programme ? Les matchs actuels et leurs scores seront effacés.</b><button class="btn" data-act="presetno">Annuler</button><button class="btn dng" data-act="presetyes" data-v="'+confirmDel.preset+'">Oui, remplacer</button></div>':
-    '<div class="tools" style="padding:0"><button class="btn pri" data-act="preset" data-v="10">10 équipes · 2 poules de 5 · 2 contre 2</button><button class="btn" data-act="preset" data-v="8">8 équipes · 2 poules de 4</button></div>')+'</section>';
+    '<div class="tools" style="padding:0"><button class="btn pri" data-act="preset" data-v="10">10 équipes · 2 poules de 5 · 1 contre 1</button><button class="btn" data-act="preset" data-v="8">8 équipes · 2 poules de 4</button></div>')+'</section>';
   h+=teamsHTML(); h+=checksHTML();
   ["poule","duel","final"].forEach(function(k){
     var list=mList(draft,k);
@@ -463,13 +463,13 @@ function drawPoster(){
     var qs=600,qx=(W-qs)/2,qy=y+140; x.fillStyle="#FFFFFF"; x.fillRect(qx-36,qy-36,qs+72,qs+72);
     if(window.QRCode){ var d=document.createElement("div"); try{ new window.QRCode(d,{text:qrLink(),width:qs,height:qs,colorDark:"#0B2C5B",colorLight:"#FFFFFF",correctLevel:window.QRCode.CorrectLevel.M}); var qc=d.querySelector("canvas"); if(qc) x.drawImage(qc,qx,qy,qs,qs); }catch(e){} }
     x.fillStyle="#F3EBD8"; x.font="800 72px 'Saira Condensed', Impact, sans-serif"; x.fillText("SCANNEZ POUR LES SCORES EN DIRECT",W/2,qy+qs+140);
-    x.fillStyle="#A9C7E4"; x.font="500 38px 'Barlow', Arial, sans-serif"; x.fillText("Matchs · Classements · Finales · 2 contre 2",W/2,qy+qs+200);
+    x.fillStyle="#A9C7E4"; x.font="500 38px 'Barlow', Arial, sans-serif"; x.fillText("Matchs · Classements · Finales · 1 contre 1",W/2,qy+qs+200);
   }; img.src=LOGO;
 }
 function downloadPoster(){ var cv=document.getElementById("poster"); if(!cv) return; var a=document.createElement("a"); a.href=cv.toDataURL("image/png"); a.download="Kids_Got_Game_QR.png"; document.body.appendChild(a); a.click(); a.remove(); }
 
 /* ===== Navigation & rendu ===== */
-var VIEWS=[["direct","Direct"],["poules","Poules"],["finales","Finales"],["duels","2 contre 2"],["regles","Règles"]];
+var VIEWS=[["direct","Direct"],["poules","Poules"],["finales","Finales"],["duels","1 contre 1"],["regles","Règles"]];
 var EDV=[["table","Table de marque"],["affiche","Affiche QR"]];
 function current(){ var h=(location.hash||"").replace("#",""); var all=VIEWS.concat(EDV).map(function(v){return v[0];}); return all.indexOf(h)>=0?h:"direct"; }
 function fmtTime(iso){ if(!iso) return "—"; var d=new Date(iso); if(isNaN(d)) return "—"; try{ return d.toLocaleTimeString("fr-FR",{timeZone:"Europe/Paris",hour:"2-digit",minute:"2-digit"}).replace(":","h"); }catch(e){ return ("0"+d.getHours()).slice(-2)+"h"+("0"+d.getMinutes()).slice(-2); } }
