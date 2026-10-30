@@ -222,8 +222,9 @@ var OFFICIAL = {
   ]
 };
 
-/* Programme 10 équipes · 2 poules de 5 · concours 2 contre 2 (calculé : chaque duo joue quand son équipe est au repos,
-   chaque équipe enchaîne au plus une fois deux matchs de poule) */
+/* Programme 10 équipes · 2 poules de 5 · concours 2 contre 2 (calculé :
+   chaque équipe enchaîne au plus une fois deux matchs de poule ;
+   le 2 contre 2 se joue quand les terrains latéraux sont libres, sur les deux paniers du terrain principal) */
 var TEN = {
   teams:[["A1","A"],["A2","A"],["A3","A"],["A4","A"],["A5","A"],["B1","B"],["B2","B"],["B3","B"],["B4","B"],["B5","B"]],
   matches:[
@@ -234,14 +235,14 @@ var TEN = {
     ["x12","11:30","Latéral 1","poule","",{h:"A3",a:"A4"}],["x13","11:30","Latéral 2","poule","",{h:"B2",a:"B3"}],["x14","11:30","Latéral 3","poule","",{h:"B4",a:"B5"}],
     ["x15","11:55","Latéral 1","poule","",{h:"A1",a:"A5"}],["x16","11:55","Latéral 2","poule","",{h:"A2",a:"A3"}],["x17","11:55","Latéral 3","poule","",{h:"B1",a:"B3"}],
     ["x18","12:20","Latéral 1","poule","",{h:"A4",a:"A5"}],["x19","12:20","Latéral 2","poule","",{h:"B1",a:"B5"}],["x20","12:20","Latéral 3","poule","",{h:"B2",a:"B4"}],
-    ["y01","09:55","Terrain principal","duel","Barrage 1",{h:"A4",a:"B2"}],
-    ["y02","10:20","Terrain principal","duel","Quart 1",{h:"A1",a:"B3"}],
-    ["y03","10:45","Terrain principal","duel","Barrage 2",{h:"A2",a:"B1"}],
-    ["y04","11:10","Terrain principal","duel","Quart 2",{h:"A3",a:"B4"}],
-    ["y05","11:35","Terrain principal","duel","Quart 3",{h:"A5",ap:"Vainqueur barrage 2"}],
-    ["y06","12:00","Terrain principal","duel","Quart 4",{h:"B5",ap:"Vainqueur barrage 1"}],
-    ["y07","14:30","Terrain principal","duel","Demi 1",{hp:"Vainqueur quart 1",ap:"Vainqueur quart 2"}],
-    ["y08","14:40","Terrain principal","duel","Demi 2",{hp:"Vainqueur quart 3",ap:"Vainqueur quart 4"}],
+    ["y01","13:25","Terrain principal · panier 1","duel","Barrage 1",{h:"A4",a:"B2"}],
+    ["y02","13:35","Terrain principal · panier 1","duel","Quart 1",{h:"A1",a:"B3"}],
+    ["y03","13:25","Terrain principal · panier 2","duel","Barrage 2",{h:"A2",a:"B1"}],
+    ["y04","13:35","Terrain principal · panier 2","duel","Quart 2",{h:"A3",a:"B4"}],
+    ["y05","13:45","Terrain principal · panier 1","duel","Quart 3",{h:"A5",ap:"Vainqueur barrage 2"}],
+    ["y06","13:45","Terrain principal · panier 2","duel","Quart 4",{h:"B5",ap:"Vainqueur barrage 1"}],
+    ["y07","14:30","Terrain principal · panier 1","duel","Demi 1",{hp:"Vainqueur quart 1",ap:"Vainqueur quart 2"}],
+    ["y08","14:30","Terrain principal · panier 2","duel","Demi 2",{hp:"Vainqueur quart 3",ap:"Vainqueur quart 4"}],
     ["y09","16:05","Terrain principal","duel","Finale 2 contre 2",{hp:"Vainqueur demi 1",ap:"Vainqueur demi 2"}],
     ["z01","14:05","Latéral 1","final","Places 5-6",{hp:"3e poule A",ap:"3e poule B"}],
     ["z02","14:05","Latéral 2","final","Places 7-8",{hp:"4e poule A",ap:"4e poule B"}],
